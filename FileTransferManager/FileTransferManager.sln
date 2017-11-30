@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2010
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileTransferManager", "FileTransferManager\FileTransferManager.csproj", "{4A03A827-634F-4AED-BD28-109ECD143D4D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileTransferManagerServer", "FileTransferManagerServer\FileTransferManagerServer.csproj", "{33869A81-DDC1-4FE2-BC3C-5E4CA7A4CA4E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4A03A827-634F-4AED-BD28-109ECD143D4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A03A827-634F-4AED-BD28-109ECD143D4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A03A827-634F-4AED-BD28-109ECD143D4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A03A827-634F-4AED-BD28-109ECD143D4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33869A81-DDC1-4FE2-BC3C-5E4CA7A4CA4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33869A81-DDC1-4FE2-BC3C-5E4CA7A4CA4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33869A81-DDC1-4FE2-BC3C-5E4CA7A4CA4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33869A81-DDC1-4FE2-BC3C-5E4CA7A4CA4E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7CD6D1D4-7F77-4DF4-A6F1-15B593AEA3BC}
+	EndGlobalSection
+EndGlobal
