@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net.Sockets;
 
 namespace FileTransferManager
 {
     interface IFileManager
     {
-        bool RecvFile(string path, Socket socket, long fileSize);
         bool SendFile(string path, Socket socket);
+        bool ReceiveFile(string path, Socket socket, long fileSize);
         bool DeleteFile(string path);
     }
 }
