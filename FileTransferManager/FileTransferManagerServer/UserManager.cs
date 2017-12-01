@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using NLog;
 using ResponseCode = FileTransferManager.ResponseCode;
 
 namespace FileTransferManagerServer
@@ -16,6 +17,8 @@ namespace FileTransferManagerServer
 
         private string login = null, password = null;
 
+        private Logger logger = LogManager.GetCurrentClassLogger();
+
         public UserManager(Socket clientSocket)
         {
             socket = clientSocket;
@@ -28,8 +31,8 @@ namespace FileTransferManagerServer
                 while (true)
                 {
                     var request = ReceiveRequest();
-                    var requestParts = ParseRequest(request);
 
+                    var requestParts = ParseRequest(request);
                     switch (requestParts[0])
                     {
                         case "DISCONNECT":
@@ -87,6 +90,8 @@ namespace FileTransferManagerServer
             }
             catch (Exception exception)
             {
+                logger.Error(exception);
+
                 if (login != null)
                 {
                     databaseManager.SignOut(login, password);
@@ -200,6 +205,8 @@ namespace FileTransferManagerServer
                 }
                 catch (Exception exception)
                 {
+                    logger.Error(exception);
+
                     if (socket.Connected)
                     {
                         SendResponseError(exception.Message);
@@ -364,6 +371,8 @@ namespace FileTransferManagerServer
             }
             catch (Exception exception)
             {
+                logger.Error(exception);
+
                 if (socket.Connected)
                 {
                     SendResponseError(exception.Message);
@@ -386,6 +395,9 @@ namespace FileTransferManagerServer
             }
             while (socket.Available > 0);
             string request = requestBuilder.ToString();
+
+            logger.Debug("Received request from " +
+                socket.RemoteEndPoint + ": " + request);
 
             return request;
         }
@@ -428,6 +440,8 @@ namespace FileTransferManagerServer
         private void SendResponse(string response)
         {
             socket.Send(Encoding.UTF8.GetBytes(response));
+            logger.Debug("Sent response to " +
+                socket.RemoteEndPoint + ": " + response);
         }
 
         private void SendResponseShutdown(string response)
