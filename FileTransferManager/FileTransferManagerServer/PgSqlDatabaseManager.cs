@@ -8,25 +8,25 @@ namespace FileTransferManagerServer
         private PgSqlConnection connection =
             new PgSqlConnection(CONNECTION_STRING);
 
-        public void Register(string login, string password)
+        public override void Register(string login, string password)
         {
             string commandText = CreateCommand("Register", login, password);
             ExecuteNonQuery(commandText);
         }
 
-        public void SignIn(string login, string password)
+        public override void SignIn(string login, string password)
         {
             string commandText = CreateCommand("SignIn", login, password);
             ExecuteNonQuery(commandText);
         }
 
-        public void SignOut(string login, string password)
+        public override void SignOut(string login, string password)
         {
             string commandText = CreateCommand("SignOut", login, password);
             ExecuteNonQuery(commandText);
         }
 
-        public void AddFile(string login, string password,
+        public override void AddFile(string login, string password,
             string rootDir, string path, long size)
         {
             string commandText = CreateCommand("AddFile",
@@ -34,7 +34,7 @@ namespace FileTransferManagerServer
             ExecuteNonQuery(commandText);
         }
 
-        public void DeleteFile(string login, string password,
+        public override void DeleteFile(string login, string password,
             string path, string owner)
         {
             string commandText = CreateCommand("DeleteFile",
@@ -42,7 +42,7 @@ namespace FileTransferManagerServer
             ExecuteNonQuery(commandText);
         }
 
-        public void ShareFile(string login, string password,
+        public override void ShareFile(string login, string password,
             string path, string user)
         {
             string commandText = CreateCommand("ShareFile",
@@ -50,7 +50,7 @@ namespace FileTransferManagerServer
             ExecuteNonQuery(commandText);
         }
 
-        public string GetVirtualFileName(string login,
+        public override string GetVirtualFileName(string login,
             string password, string path, string owner)
         {
             string commandText = CreateCommand("GetVirtualFileName",
@@ -58,13 +58,13 @@ namespace FileTransferManagerServer
             return ExecuteReturnString(commandText);
         }
 
-        public string GetUsersList(string login, string password)
+        public override string GetUsersList(string login, string password)
         {
             string commandText = CreateCommand("GetUsersList", login, password);
             return ExecuteReturnList(commandText, 2);
         }
 
-        public string GetFilesList(string login, string password)
+        public override string GetFilesList(string login, string password)
         {
             string commandText = CreateCommand("GetFilesList", login, password);
             return ExecuteReturnList(commandText, 4);
@@ -130,7 +130,7 @@ namespace FileTransferManagerServer
             }                
 
             connection.Close();
-            return result.ToString();
+            return result.ToString().TrimStart(' ');
         }
     }
 }

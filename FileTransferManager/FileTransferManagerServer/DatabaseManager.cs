@@ -14,5 +14,22 @@
             "Host=" + HOST + ";" +
             "Port=" + PORT + ";" +
             "Database=" + DATABASE + ";";
+
+        public abstract void Register(string login, string password);
+        public abstract void SignIn(string login, string password);
+        public abstract void SignOut(string login, string password);
+
+        public abstract void AddFile(string login,
+            string password, string rootDir, string path, long size);
+        public abstract void DeleteFile(string login,
+            string password, string path, string owner);
+        public abstract void ShareFile(string login,
+            string password, string path, string user);
+
+        public abstract string GetVirtualFileName(string login,
+            string password, string path, string owner);
+
+        public abstract string GetUsersList(string login, string password);
+        public abstract string GetFilesList(string login, string password);
     }
 }

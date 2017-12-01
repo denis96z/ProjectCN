@@ -2,12 +2,17 @@
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
+using ResponseCode = FileTransferManager.ResponseCode;
 
 namespace FileTransferManagerServer
 {
     class UserManager
     {
         private readonly Socket socket;
+
+        private IFileManager fileManager = new FileManager();
+        private DatabaseManager databaseManager = new PgSqlDatabaseManager();
 
         private string login = null, password = null;
 
@@ -18,54 +23,352 @@ namespace FileTransferManagerServer
 
         public void HandleRequests()
         {
-            throw new NotImplementedException();
+            try
+            {
+                while (true)
+                {
+                    var request = ReceiveRequest();
+                    var requestParts = ParseRequest(request);
+
+                    switch (requestParts[0])
+                    {
+                        case "DISCONNECT":
+                            if (requestParts.Count != 1)
+                            {
+                                SendResponseBadRequest();
+                            }
+                            else
+                            {
+                                SendResponseShutdown(ResponseCode.OK);
+                            }
+                            break;
+
+                        case "REGISTER":
+                            HandleRegisterRequest(requestParts);
+                            break;
+
+                        case "SIGNIN":
+                            HandleSignInRequest(requestParts);
+                            break;
+
+                        case "SIGNOUT":
+                            HandleSignOutRequest(requestParts);
+                            break;
+
+                        case "UPLOAD":
+                            HandleUploadRequest(requestParts);
+                            break;
+
+                        case "DOWNLOAD":
+                            HandleDownloadRequest(requestParts);
+                            break;
+
+                        case "DELETE":
+                            HandleDeleteRequest(requestParts);
+                            break;
+
+                        case "SHARE":
+                            HandleShareRequest(requestParts);
+                            break;
+
+                        case "USERLIST":
+                            HandleUserListRequest(requestParts);
+                            break;
+
+                        case "FILELIST":
+                            HandleFileListRequest(requestParts);
+                            break;
+
+                        default:
+                            SendResponseBadRequest();
+                            break;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                if (login != null)
+                {
+                    databaseManager.SignOut(login, password);
+                }
+            }
         }
 
         #region ProtocolMethods
 
         private void HandleRegisterRequest(List<string> requestParts)
         {
-            throw new NotImplementedException();
+            if (requestParts.Count != 3)
+            {
+                SendResponseBadRequest();
+            }
+            else if (login != null)
+            {
+                SendResponseAlreadyAuthorized();
+            }
+            else
+            {
+                HandleSecure(() =>
+                {
+                    databaseManager.Register(requestParts[1], requestParts[2]);
+                    databaseManager.SignIn(requestParts[1], requestParts[2]);
+                    login = requestParts[1];
+                    password = requestParts[2];
+                });
+            }
         }
 
         private void HandleSignInRequest(List<string> requestParts)
         {
-            throw new NotImplementedException();
+            if (requestParts.Count != 3)
+            {
+                SendResponseBadRequest();
+            }
+            else if (login != null)
+            {
+                SendResponseAlreadyAuthorized();
+            }
+            else
+            {
+                HandleSecure(() =>
+                {
+                    databaseManager.SignIn(requestParts[1], requestParts[2]);
+                    login = requestParts[1];
+                    password = requestParts[2];
+                    SendResponseOk();
+                });
+            }
         }
 
         private void HandleSignOutRequest(List<string> requestParts)
         {
-            throw new NotImplementedException();
+            if (requestParts.Count != 1)
+            {
+                SendResponseBadRequest();
+            }
+            else if (login == null)
+            {
+                SendResponseNotAuthorized();
+            }
+            else
+            {
+                HandleSecure(() =>
+                {
+                    databaseManager.SignOut(login, password);
+                    login = null;
+                    password = null;
+                    SendResponseOk();
+                });
+            }
         }
 
         private void HandleUploadRequest(List<string> requestParts)
         {
-            throw new NotImplementedException();
+            if (requestParts.Count != 3)
+            {
+                SendResponseBadRequest();
+            }
+            else if (login == null)
+            {
+                SendResponseNotAuthorized();
+            }
+            else
+            {
+                bool fileAdded = false;
+                try
+                {
+                    string path = requestParts[1];
+                    long size = long.Parse(requestParts[2]);
+
+                    databaseManager.AddFile(login, password,
+                        ServerData.RootDirectory, login, size);
+                    fileAdded = true;
+
+                    string virtualPath = databaseManager
+                        .GetVirtualFileName(login, password, path, login);
+                    fileManager.ReceiveFile(path, socket, size);
+
+                    string hsRequest = ReceiveRequest();
+                    if (hsRequest == "HANDSHAKE")
+                    {
+                        SendResponseOk();
+                    }
+                    else
+                    {
+                        SendResponseBadRequest();
+                    }
+                }
+                catch (Exception exception)
+                {
+                    if (socket.Connected)
+                    {
+                        SendResponseError(exception.Message);
+                    }
+
+                    if (fileAdded)
+                    {
+                        databaseManager.DeleteFile(login, password, requestParts[1], login);
+                    }
+                }
+            }
         }
 
         private void HandleDownloadRequest(List<string> requestParts)
         {
-            throw new NotImplementedException();
+            if (requestParts.Count != 3)
+            {
+                SendResponseBadRequest();
+            }
+            else if (login == null)
+            {
+                SendResponseNotAuthorized();
+            }
+            else
+            {
+                HandleSecure(() =>
+                {
+                    string path = requestParts[1];
+                    string owner = requestParts[2];
+
+                    string virtualPath = databaseManager
+                        .GetVirtualFileName(login, password, path, owner);
+                    fileManager.SendFile(path, socket);
+
+                    string hsRequest = ReceiveRequest();
+                    if (hsRequest == "HANDSHAKE")
+                    {
+                        SendResponseOk();
+                    }
+                    else
+                    {
+                        SendResponseBadRequest();
+                    }
+                });
+            }
         }
 
         private void HandleDeleteRequest(List<string> requestParts)
         {
-            throw new NotImplementedException();
+            if (requestParts.Count != 3)
+            {
+                SendResponseBadRequest();
+            }
+            else if (login == null)
+            {
+                SendResponseNotAuthorized();
+            }
+            else
+            {
+                HandleSecure(() =>
+                {
+                    string path = requestParts[1];
+                    string owner = requestParts[2];
+                    databaseManager.DeleteFile(login, password, path, owner);
+                    SendResponseOk();
+                });
+            }
         }
 
         private void HandleShareRequest(List<string> requestParts)
         {
-            throw new NotImplementedException();
+            if (requestParts.Count != 3)
+            {
+                SendResponseBadRequest();
+            }
+            else if (login == null)
+            {
+                SendResponseNotAuthorized();
+            }
+            else
+            {
+                HandleSecure(() =>
+                {
+                    string path = requestParts[1];
+                    string user = requestParts[2];
+                    databaseManager.ShareFile(login, password, path, user);
+                    SendResponseOk();
+                });
+            }
         }
 
-        private void HandleUserlistRequest(List<string> requestParts)
+        private void HandleUserListRequest(List<string> requestParts)
         {
-            throw new NotImplementedException();
+            if (requestParts.Count != 1)
+            {
+                SendResponseBadRequest();
+            }
+            else if (login == null)
+            {
+                SendResponseNotAuthorized();
+            }
+            else
+            {
+                HandleSecure(() =>
+                {
+                    var list = databaseManager.GetUsersList(login, password);
+                    SendResponseOkList(list);
+                });
+            }
         }
 
         private void HandleFileListRequest(List<string> requestParts)
         {
-            throw new NotImplementedException();
+            if (requestParts.Count != 1)
+            {
+                SendResponseBadRequest();
+            }
+            else if (login == null)
+            {
+                SendResponseNotAuthorized();
+            }
+            else
+            {
+                HandleSecure(() =>
+                {
+                    var list = databaseManager.GetFilesList(login, password);
+                    SendResponseOkList(list);
+                });
+            }
+        }
+
+        #endregion
+
+        #region SpecialMethods
+
+        private List<string> ParseRequest(string request)
+        {
+            Regex regex = new Regex("^(\\w+)( \"[^ \\f\\n\\r\\t\\v\"\']+\")*$");
+            if (regex.IsMatch(request))
+            {
+                var args = request.Split(' ', '"');
+
+                var parts = new List<string>();
+                foreach (var arg in args)
+                {
+                    if (arg != String.Empty) parts.Add(arg);
+                }
+
+                return parts;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private void HandleSecure(Action action)
+        {
+            try
+            {
+                action.Invoke();
+            }
+            catch (Exception exception)
+            {
+                if (socket.Connected)
+                {
+                    SendResponseError(exception.Message);
+                }
+            }
         }
 
         #endregion
@@ -85,6 +388,41 @@ namespace FileTransferManagerServer
             string request = requestBuilder.ToString();
 
             return request;
+        }
+
+        private void SendResponseOk()
+        {
+            SendResponse(ResponseCode.OK);
+        }
+
+        private void SendResponseOkList(string list)
+        {
+            SendResponseOkList(ResponseCode.OK_LIST + " " + list);
+        }
+
+        private void SendResponseError()
+        {
+            SendResponse(ResponseCode.ERROR);
+        }
+
+        private void SendResponseError(string explanation)
+        {
+            SendResponse(ResponseCode.ERROR_EXPL + " \"" + explanation + "\"");
+        }
+
+        private void SendResponseBadRequest()
+        {
+            SendResponseError("Bad request.");
+        }
+
+        private void SendResponseAlreadyAuthorized()
+        {
+            SendResponseError("Already authorized.");
+        }
+
+        private void SendResponseNotAuthorized()
+        {
+            SendResponseError("Not authorized.");
         }
 
         private void SendResponse(string response)
