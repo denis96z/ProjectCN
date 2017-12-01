@@ -14,7 +14,7 @@ namespace FileTransferManagerServer
 
         private Logger logger = LogManager.GetCurrentClassLogger();
 
-        public void StartServer()
+        public void Start()
         {
             new Thread(() =>
             {
@@ -40,7 +40,7 @@ namespace FileTransferManagerServer
             }).Start();
         }
 
-        public void StopServer()
+        public void Stop()
         {
             tcpListener.Stop();
         }
