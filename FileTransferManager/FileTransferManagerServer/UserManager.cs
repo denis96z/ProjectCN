@@ -119,6 +119,7 @@ namespace FileTransferManagerServer
                     databaseManager.SignIn(requestParts[1], requestParts[2]);
                     login = requestParts[1];
                     password = requestParts[2];
+                    SendResponseOk();
                 });
             }
         }
@@ -409,7 +410,7 @@ namespace FileTransferManagerServer
 
         private void SendResponseOkList(string list)
         {
-            SendResponseOkList(ResponseCode.OK_LIST + " " + list);
+            SendResponse(ResponseCode.OK_LIST + " " + list);
         }
 
         private void SendResponseError()

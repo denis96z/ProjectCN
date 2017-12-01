@@ -123,7 +123,7 @@ namespace FileTransferManagerServer
                 {
                     for (int i = 0; i < numColumns; i++)
                     {
-                        result.Append(" " + reader.GetValue(i).ToString());
+                        result.Append(" \"" + reader.GetValue(i).ToString() + "\"");
                     }
                 }
                 reader.Close();
