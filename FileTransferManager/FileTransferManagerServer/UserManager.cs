@@ -212,6 +212,10 @@ namespace FileTransferManagerServer
                     {
                         SendResponseError(exception.Message);
                     }
+                    else if (login != null)
+                    {
+                        databaseManager.SignOut(login, password);
+                    }
 
                     if (fileAdded)
                     {
@@ -377,6 +381,10 @@ namespace FileTransferManagerServer
                 if (socket.Connected)
                 {
                     SendResponseError(exception.Message);
+                }
+                else if (login != null)
+                {
+                    databaseManager.SignOut(login, password);
                 }
             }
         }

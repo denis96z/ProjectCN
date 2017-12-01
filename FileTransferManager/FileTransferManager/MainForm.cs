@@ -18,7 +18,7 @@ namespace FileTransferManager
             try
             {
                 userAction.Invoke();
-                UpdateLists();
+                if (updateTimer.Enabled) UpdateLists();
             }
             catch (Exception exception)
             {

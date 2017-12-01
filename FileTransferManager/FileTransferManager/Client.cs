@@ -133,9 +133,11 @@ namespace FileTransferManager
             }
             else if (args[0] == ResponseCode.OK_LIST)
             {
-                for (int i = 1; i < args.Length; i++)
+                for (int i = 1; i < args.Length; i += 2)
                 {
-                    yield return args[i].Trim('"');
+                    yield return args[i].Trim('"') +
+                        (args[i + 1].Trim('"') == "Online" ?
+                        " √" : String.Empty);
                 }
             }
             else
