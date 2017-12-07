@@ -30,19 +30,18 @@
         {
             this.components = new System.ComponentModel.Container();
             this.gbFileList = new System.Windows.Forms.GroupBox();
+            this.lbFiles = new System.Windows.Forms.CheckedListBox();
             this.btnUploadFile = new System.Windows.Forms.Button();
             this.btnDownloadFile = new System.Windows.Forms.Button();
             this.btnRegister = new System.Windows.Forms.Button();
             this.btnSignInOut = new System.Windows.Forms.Button();
             this.gbUserList = new System.Windows.Forms.GroupBox();
+            this.lbUsers = new System.Windows.Forms.CheckedListBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
-            this.lbFiles = new System.Windows.Forms.CheckedListBox();
-            this.lbUsers = new System.Windows.Forms.CheckedListBox();
             this.btnShare = new System.Windows.Forms.Button();
-            this.lblTimeLeft = new System.Windows.Forms.Label();
             this.gbFileList.SuspendLayout();
             this.gbUserList.SuspendLayout();
             this.SuspendLayout();
@@ -56,6 +55,15 @@
             this.gbFileList.TabIndex = 0;
             this.gbFileList.TabStop = false;
             this.gbFileList.Text = "Files on server:";
+            // 
+            // lbFiles
+            // 
+            this.lbFiles.FormattingEnabled = true;
+            this.lbFiles.Location = new System.Drawing.Point(6, 19);
+            this.lbFiles.Name = "lbFiles";
+            this.lbFiles.Size = new System.Drawing.Size(314, 229);
+            this.lbFiles.TabIndex = 8;
+            this.lbFiles.Click += new System.EventHandler(this.lbFiles_Click);
             // 
             // btnUploadFile
             // 
@@ -107,6 +115,15 @@
             this.gbUserList.TabStop = false;
             this.gbUserList.Text = "Users:";
             // 
+            // lbUsers
+            // 
+            this.lbUsers.FormattingEnabled = true;
+            this.lbUsers.Location = new System.Drawing.Point(6, 22);
+            this.lbUsers.Name = "lbUsers";
+            this.lbUsers.Size = new System.Drawing.Size(187, 229);
+            this.lbUsers.TabIndex = 0;
+            this.lbUsers.Click += new System.EventHandler(this.lbFiles_Click);
+            // 
             // updateTimer
             // 
             this.updateTimer.Interval = 5000;
@@ -119,24 +136,6 @@
             this.progressBar.Size = new System.Drawing.Size(199, 23);
             this.progressBar.TabIndex = 7;
             // 
-            // lbFiles
-            // 
-            this.lbFiles.FormattingEnabled = true;
-            this.lbFiles.Location = new System.Drawing.Point(6, 19);
-            this.lbFiles.Name = "lbFiles";
-            this.lbFiles.Size = new System.Drawing.Size(314, 229);
-            this.lbFiles.TabIndex = 8;
-            this.lbFiles.Click += new System.EventHandler(this.lbFiles_Click);
-            // 
-            // lbUsers
-            // 
-            this.lbUsers.FormattingEnabled = true;
-            this.lbUsers.Location = new System.Drawing.Point(6, 22);
-            this.lbUsers.Name = "lbUsers";
-            this.lbUsers.Size = new System.Drawing.Size(187, 229);
-            this.lbUsers.TabIndex = 0;
-            this.lbUsers.Click += new System.EventHandler(this.lbFiles_Click);
-            // 
             // btnShare
             // 
             this.btnShare.Location = new System.Drawing.Point(218, 316);
@@ -147,20 +146,11 @@
             this.btnShare.UseVisualStyleBackColor = true;
             this.btnShare.Click += new System.EventHandler(this.btnShare_Click);
             // 
-            // lblTimeLeft
-            // 
-            this.lblTimeLeft.AutoSize = true;
-            this.lblTimeLeft.Location = new System.Drawing.Point(347, 300);
-            this.lblTimeLeft.Name = "lblTimeLeft";
-            this.lblTimeLeft.Size = new System.Drawing.Size(0, 13);
-            this.lblTimeLeft.TabIndex = 9;
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(555, 351);
-            this.Controls.Add(this.lblTimeLeft);
             this.Controls.Add(this.btnShare);
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.gbUserList);
@@ -175,7 +165,6 @@
             this.gbFileList.ResumeLayout(false);
             this.gbUserList.ResumeLayout(false);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -194,7 +183,6 @@
         private System.Windows.Forms.CheckedListBox lbFiles;
         private System.Windows.Forms.CheckedListBox lbUsers;
         private System.Windows.Forms.Button btnShare;
-        private System.Windows.Forms.Label lblTimeLeft;
     }
 }
 

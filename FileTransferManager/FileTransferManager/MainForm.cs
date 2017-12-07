@@ -2,7 +2,6 @@
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
 using System.IO;
-using System.Threading;
 
 namespace FileTransferManager
 {
@@ -77,10 +76,8 @@ namespace FileTransferManager
                 {
                     string serverPath = Interaction.InputBox("Server path: ",
                         String.Empty, new FileInfo(openFileDialog.FileName).Name);
-                    transferStartTime = DateTime.Now;
                     client.UploadFile(openFileDialog.FileName,
                         serverPath, OnFileTransferProgress);
-                    lblTimeLeft.Text = String.Empty;
                 }
                 progressBar.Value = 0;
                 updateTimer.Enabled = true;
@@ -106,10 +103,8 @@ namespace FileTransferManager
                     saveFileDialog.FileName = saveFileDialog.InitialDirectory + fileName;
                     if (saveFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        transferStartTime = DateTime.Now;
                         client.DownloadFile(fileData.Path, fileData.Owner,
                             saveFileDialog.FileName, OnFileTransferProgress);
-                        lblTimeLeft.Text = String.Empty;
                     }
 
                     progressBar.Value = 0;
@@ -206,93 +201,10 @@ namespace FileTransferManager
             updateTimer.Enabled = true;
         }
 
-        private DateTime transferStartTime;
-
         private void OnFileTransferProgress(long progress, long fileSize)
         {
             double p = (double)progress / fileSize;
             progressBar.Value = (int)(progressBar.Maximum * p);
-
-            string timeLeftMsg = String.Empty;
-            var timePassed = DateTime.Now - transferStartTime;
-
-            double pLeft = 1.0 - p;
-            int leftDays = (int)(timePassed.Days / pLeft);
-            int leftHours = (int)(timePassed.Hours / pLeft);
-            int leftMinutes = (int)(timePassed.Minutes / pLeft);
-            int leftSeconds = (int)(timePassed.Seconds / pLeft);
-
-            leftMinutes += leftSeconds / 60;
-            leftHours += leftMinutes / 60;
-            leftMinutes %= 60;
-            leftSeconds %= 60;
-
-
-            if (leftDays > 0 || leftHours > 1)
-            {
-                timeLeftMsg = "Осталось более часа.";
-            }
-            else
-            {
-                if (leftMinutes > 0)
-                {
-                    switch (leftMinutes % 10)
-                    {
-                        case 1:
-                            timeLeftMsg = "Осталась " + leftMinutes + " минута";
-                        break;
-
-                        case 2:
-                        case 3:
-                        case 4:
-                            timeLeftMsg = "Осталось " + leftMinutes + " минуты";
-                            break;
-
-                        default:
-                            timeLeftMsg = "Осталось " + leftMinutes + " минут";
-                            break;
-                    }
-
-                    switch (leftSeconds % 10)
-                    {
-                        case 1:
-                            timeLeftMsg += " " + leftSeconds + " секунд.";
-                            break;
-
-                        case 2:
-                        case 3:
-                        case 4:
-                            timeLeftMsg += " " + leftSeconds + " секунды.";
-                            break;
-
-                        default:
-                            timeLeftMsg += " " + leftMinutes + " секунд.";
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (leftSeconds % 10)
-                    {
-                        case 1:
-                            timeLeftMsg = "Осталась " + leftSeconds + " секунд.";
-                            break;
-
-                        case 2:
-                        case 3:
-                        case 4:
-                            timeLeftMsg = "Осталось " + leftSeconds + " секунды.";
-                            break;
-
-                        default:
-                            timeLeftMsg = "Осталось " + leftMinutes + " секунд.";
-                            break;
-                    }
-                }
-            }
-
-            lblTimeLeft.Text = timeLeftMsg;
-            Thread.Sleep(100);
         }
 
         private void lbFiles_Click(object sender, EventArgs e)
