@@ -58,6 +58,14 @@ namespace FileTransferManagerServer
             return ExecuteReturnString(commandText);
         }
 
+        public override long GetFileSize(string login,
+            string password, string path, string owner)
+        {
+            string commandText = CreateCommand("GetFileSize",
+                login, password, path, owner);
+            return ExecuteReturnLong(commandText);
+        }
+
         public override string GetUsersList(string login, string password)
         {
             string commandText = CreateCommand("GetUsersList", login, password);
@@ -106,6 +114,18 @@ namespace FileTransferManagerServer
             var reader = command.ExecuteReader();
             reader.Read();
             string result = reader.GetString(0);
+            reader.Close();
+            connection.Close();
+            return result;
+        }
+
+        private long ExecuteReturnLong(string commandText)
+        {
+            PgSqlCommand command = new PgSqlCommand(commandText, connection);
+            connection.Open();
+            var reader = command.ExecuteReader();
+            reader.Read();
+            long result = reader.GetInt64(0);
             reader.Close();
             connection.Close();
             return result;

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace FileTransferManager
 {
@@ -74,14 +74,43 @@ namespace FileTransferManager
         public delegate void FileTransferStartCallBack(long fileSize);
         public delegate void FileTransferProgressCallback(long transferedSize);
 
-        public void UploadFile(string localPath, string serverPath)
+        public void UploadFile(string localPath, string serverPath,
+            OnFileTransterProgress onProgress)
         {
-            throw new NotImplementedException();
+            FileInfo fileInfo = new FileInfo(localPath);
+
+            SendRequest("UPLOAD \"" + serverPath + "\" \"" + fileInfo.Length + "\"");
+            string response = ReceiveResponse();
+            if (response != ResponseCode.OK)
+            {
+                throw new Exception(response);
+            }
+
+            SendFile(localPath, socket, onProgress);
+            response = ReceiveResponse();
+            if (response != ResponseCode.OK)
+            {
+                throw new Exception(response);
+            }
         }
 
-        public void DownloadFile(string serverPath, string localPath)
+        public void DownloadFile(string serverPath, string owner,
+            string localPath, OnFileTransterProgress onProgress)
         {
-            throw new NotImplementedException();
+            string request = "DOWNLOAD \"" + serverPath + "\" \"" + owner + "\"";
+            SendRequest(request);
+
+            string response = ReceiveResponse();
+            string[] args = response.Split(' ');
+            if (args[0] != ResponseCode.OK_LIST)
+            {
+                throw new Exception(response);
+            }
+
+            long size = long.Parse(args[1].Trim('"'));
+            SendRequest(ResponseCode.OK);
+
+            ReceiveFile(localPath, socket, size, onProgress);
         }
 
         public void Share(string serverPath, string user)
@@ -94,13 +123,12 @@ namespace FileTransferManager
             }
         }
 
-        public IEnumerable<string> GetFileList()
+        public IEnumerable<FileData> GetFileList()
         {
             SendRequest("FILELIST");
 
             string response = ReceiveResponse();
-            char delimiter = ' ';
-            string[] args = response.Split(delimiter);
+            string[] args = response.Split(' ', '\0');
 
             if (args[0] == ResponseCode.OK)
             {
@@ -108,9 +136,11 @@ namespace FileTransferManager
             }
             else if (args[0] == ResponseCode.OK_LIST)
             {
-                for (int i = 1; i < args.Length; i++)
+                for (int i = 1; i < args.Length - 3; i += 4)
                 {
-                    yield return args[i].Trim('"');
+                    yield return new FileData(
+                        args[i].Trim('"'), args[i + 1].Trim('"'),
+                        long.Parse(args[i + 3].Trim('"')));
                 }
             }
             else
@@ -119,13 +149,12 @@ namespace FileTransferManager
             }
         }
 
-        public IEnumerable<string> GetUserList()
+        public IEnumerable<UserData> GetUserList()
         {
             SendRequest("USERLIST");
 
             string response = ReceiveResponse();
-            char delimiter = ' ';
-            string[] args = response.Split(delimiter);
+            string[] args = response.Split(' ', '\0');
 
             if (args[0] == ResponseCode.OK)
             {
@@ -133,11 +162,9 @@ namespace FileTransferManager
             }
             else if (args[0] == ResponseCode.OK_LIST)
             {
-                for (int i = 1; i < args.Length; i += 2)
+                for (int i = 1; i < args.Length - 1; i += 2)
                 {
-                    yield return args[i].Trim('"') +
-                        (args[i + 1].Trim('"') == "Online" ?
-                        " √" : String.Empty);
+                    yield return new UserData(args[i].Trim('"'), args[i + 1].Trim('"'));
                 }
             }
             else
@@ -178,6 +205,60 @@ namespace FileTransferManager
         private void SendRequest(string response)
         {
             socket.Send(Encoding.UTF8.GetBytes(response));
+        }
+
+        private const int BUFFER_SIZE = 1000;
+
+        public delegate void OnFileTransterProgress(long progress, long fileSize);
+
+        public void SendFile(string path, Socket socket, OnFileTransterProgress onProgress)
+        {
+            var fileStream = File.OpenRead(path);
+            using (var reader = new BinaryReader(fileStream))
+            {
+                long numFullBuffers = reader.BaseStream.Length / BUFFER_SIZE;
+                int restBufferSize = (int)(reader.BaseStream.Length % BUFFER_SIZE);
+
+                for (long i = 1; i <= numFullBuffers; i++)
+                {
+                    var buffer = reader.ReadBytes(BUFFER_SIZE);
+                    socket.Send(buffer);
+
+                    onProgress.Invoke(i * BUFFER_SIZE, reader.BaseStream.Length);
+                }
+
+                if (restBufferSize > 0)
+                {
+                    var buffer = reader.ReadBytes(restBufferSize);
+                    socket.Send(buffer);
+
+                    onProgress.Invoke(reader.BaseStream.Length, reader.BaseStream.Length);
+                }
+
+                reader.Close();
+            }
+        }
+
+        public void ReceiveFile(string path, Socket socket,
+            long fileSize, OnFileTransterProgress onProgress)
+        {
+            var fileStream = File.Create(path);
+            using (var writer = new BinaryWriter(fileStream))
+            {
+                long recvCounter = 0;
+                byte[] buffer = new byte[BUFFER_SIZE];
+                while (recvCounter < fileSize)
+                {
+                    int length = socket.Receive(buffer);
+                    for (int i = 0; i < length; i++)
+                    {
+                        writer.Write(buffer[i]);
+                    }
+                    recvCounter += length;
+                    onProgress.Invoke(recvCounter, fileSize);
+                }
+                writer.Close();
+            }
         }
     }
 }

@@ -187,22 +187,16 @@ namespace FileTransferManagerServer
                     long size = long.Parse(requestParts[2]);
 
                     databaseManager.AddFile(login, password,
-                        ServerData.RootDirectory, login, size);
+                        ServerData.RootDirectory, path, size);
                     fileAdded = true;
+
+                    SendResponseOk();
 
                     string virtualPath = databaseManager
                         .GetVirtualFileName(login, password, path, login);
-                    fileManager.ReceiveFile(path, socket, size);
+                    fileManager.ReceiveFile(virtualPath, socket, size);
 
-                    string hsRequest = ReceiveRequest();
-                    if (hsRequest == "HANDSHAKE")
-                    {
-                        SendResponseOk();
-                    }
-                    else
-                    {
-                        SendResponseBadRequest();
-                    }
+                    SendResponseOk();
                 }
                 catch (Exception exception)
                 {
@@ -244,16 +238,19 @@ namespace FileTransferManagerServer
 
                     string virtualPath = databaseManager
                         .GetVirtualFileName(login, password, path, owner);
-                    fileManager.SendFile(path, socket);
+                    long fileSize = databaseManager
+                        .GetFileSize(login, password, path, owner);
 
-                    string hsRequest = ReceiveRequest();
-                    if (hsRequest == "HANDSHAKE")
+                    SendResponseOkList("\"" + fileSize.ToString() + "\"");
+
+                    string request = ReceiveRequest();
+                    if (request == ResponseCode.OK)
                     {
-                        SendResponseOk();
+                        fileManager.SendFile(virtualPath, socket);
                     }
                     else
                     {
-                        SendResponseBadRequest();
+                        SendResponseError("Download declined.");
                     }
                 });
             }
