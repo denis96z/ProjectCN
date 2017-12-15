@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Runtime.InteropServices;
 
 namespace FileTransferManager
 {
@@ -211,8 +212,16 @@ namespace FileTransferManager
 
         public delegate void OnFileTransterProgress(long progress, long fileSize);
 
+        [DllImport("kernel32.dll")]
+        private extern static short QueryPerformanceCounter(ref long x);
+        [DllImport("kernel32.dll")]
+        private extern static short QueryPerformanceFrequency(ref long x);
+
         public void SendFile(string path, Socket socket, OnFileTransterProgress onProgress)
         {
+            long t1 = 0, t2 = 0, freq = 0;
+            QueryPerformanceCounter(ref t1);
+
             var fileStream = File.OpenRead(path);
             using (var reader = new BinaryReader(fileStream))
             {
@@ -237,11 +246,18 @@ namespace FileTransferManager
 
                 reader.Close();
             }
+
+            QueryPerformanceCounter(ref t2);
+            QueryPerformanceFrequency(ref freq);
+            double t = (double)(t2 - t1) / freq;
         }
 
         public void ReceiveFile(string path, Socket socket,
             long fileSize, OnFileTransterProgress onProgress)
         {
+            long t1 = 0, t2 = 0, freq = 0;
+            QueryPerformanceCounter(ref t1);
+
             var fileStream = File.Create(path);
             using (var writer = new BinaryWriter(fileStream))
             {
@@ -259,6 +275,10 @@ namespace FileTransferManager
                 }
                 writer.Close();
             }
+
+            QueryPerformanceCounter(ref t2);
+            QueryPerformanceFrequency(ref freq);
+            double t = (double)(t2 - t1) / freq;
         }
     }
 }
